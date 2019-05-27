@@ -100,7 +100,7 @@ func StartCredentialProxyOnWindows() error {
 
 func StartCredentialProxyWithSudo() error {
 	log.Printf("Starting `aws-vault server` as root in the background")
-	cmd := exec.Command("sudo", "-b", os.Args[0], "server")
+	cmd := exec.Command("sudo", "-b", os.Args[0], "--debug", "server")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -128,6 +128,8 @@ func StartCredentialsServer(creds *vault.VaultCredentials) error {
 
 	log.Printf("Local instance role server running on %s", l.Addr())
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("RemoteAddr = %v", r.RemoteAddr)
+
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -136,13 +138,13 @@ func StartCredentialsServer(creds *vault.VaultCredentials) error {
 
 		// Must make sure the remote ip is from the loopback, otherwise clients on the same network segment could
 		// potentially route traffic via 169.254.169.254:80
+		// We also added 169.254.169.254 to the loopback interface so we may appear to be 169.254.169.254 ourselves.
 		// See https://developer.apple.com/library/content/qa/qa1357/_index.html
-		if !net.ParseIP(ip).IsLoopback() {
+		if !net.ParseIP(ip).IsLoopback() && ip != "169.254.169.254" {
 			http.Error(w, "Access denied from non-localhost address", http.StatusUnauthorized)
 			return
 		}
 
-		log.Printf("RemoteAddr = %v", r.RemoteAddr)
 		log.Printf("Credentials.IsExpired() = %#v", creds.IsExpired())
 
 		val, err := creds.Get()

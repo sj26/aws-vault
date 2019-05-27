@@ -52,7 +52,7 @@ func ConfigureGlobals(app *kingpin.Application) {
 		EnumVar(&GlobalFlags.PromptDriver, promptsAvailable...)
 
 	app.Flag("keychain", "Name of macOS keychain to use, if it doesn't exist it will be created").
-		Default("aws-vault").
+		Default("login").
 		OverrideDefaultFromEnvar("AWS_VAULT_KEYCHAIN_NAME").
 		StringVar(&GlobalFlags.KeychainName)
 

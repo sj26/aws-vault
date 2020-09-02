@@ -36,6 +36,7 @@ func ConfigureLoginCommand(app *kingpin.Application, a *AwsVault) {
 		DurationVar(&input.SessionDuration)
 
 	cmd.Flag("no-session", "Skip creating STS session with GetSessionToken").
+		OverrideDefaultFromEnvar("AWS_VAULT_NO_SESSION").
 		Short('n').
 		BoolVar(&input.NoSession)
 
